@@ -36,13 +36,38 @@ namespace Monkland {
         private FSprite blackFadeSprite;
         private float blackFade;
         private float lastBlackFade;
-        private bool gameStarting = false;
+        private bool gameStarting = false; // boolean variables default to false
 
         public SteamMultiplayerMenu(ProcessManager manager, bool shouldCreateLobby = false) : base( manager, ProcessManager.ProcessID.MainMenu ) {
 
             if( shouldCreateLobby ) {
                 MonklandSteamManager.instance.CreateLobby();
             }
+
+            #region UI ELEMENTS SIZE DEFINITION
+            float resOffset = (1366 - manager.rainWorld.screenSize.x) / 2; // shift everything to the right depending on the resolution. 1/2 of the diff with the max resolution.
+
+            float screenWidth = manager.rainWorld.screenSize.x;
+            float screenHeight = manager.rainWorld.screenSize.y;
+            // initialize some dynamic sizes and positions for UI elements.
+            // player list and multiplayer settings have the same size no matter what the resolution.
+            // the room chat adjusts to fill all the middle space
+            float panelGutter = 15; // gap width between the panels
+
+            float playerListWidth = 200; // constant
+            float multiplayerSettingsWidth = 300; // constant
+            float multiplayerSettingsSliderWidth = multiplayerSettingsWidth - 115; // constant
+            float roomChatWidth = screenWidth - ( playerListWidth + multiplayerSettingsWidth + panelGutter * 4 ); // depends on resolution
+
+            float playerListPositionX = panelGutter; // position depending on size
+            float multiplayerSettingsPositionX = screenWidth - (multiplayerSettingsWidth + panelGutter); // position depending on screen width
+            float multiplayerSettingsSliderPositionX = multiplayerSettingsPositionX + 10; // constant
+            float roomChatPositionX = playerListWidth + panelGutter * 2; // position depending on player list width
+
+            float controlButtonSpaceHeight = 100; // constant
+            float panelHeight = screenHeight - (controlButtonSpaceHeight + panelGutter * 2); // leaving a space for control buttons
+            float panelPositionY = controlButtonSpaceHeight; // constant
+            #endregion
 
             this.blackFade = 1f;
             this.lastBlackFade = 1f;
@@ -51,68 +76,67 @@ namespace Monkland {
             //this.pages[0].subObjects.Add( this.scene );
             this.darkSprite = new FSprite( "pixel", true );
             this.darkSprite.color = new Color( 0f, 0f, 0f );
-            this.darkSprite.anchorX = 0f;
-            this.darkSprite.anchorY = 0f;
-            this.darkSprite.scaleX = 1368f;
-            this.darkSprite.scaleY = 770f;
-            this.darkSprite.x = -1f;
-            this.darkSprite.y = -1f;
+            this.darkSprite.scaleX = screenWidth;
+            this.darkSprite.scaleY = screenHeight;
+            this.darkSprite.x = screenWidth / 2f;
+            this.darkSprite.y = screenHeight / 2f;
             this.darkSprite.alpha = 0.85f;
             this.pages[0].Container.AddChild( this.darkSprite );
             this.blackFadeSprite = new FSprite( "Futile_White", true );
             this.blackFadeSprite.scaleX = 87.5f;
-            this.gameStarting = false;
+            this.gameStarting = false; // redondant
             this.blackFadeSprite.scaleY = 50f;
-            this.blackFadeSprite.x = manager.rainWorld.screenSize.x / 2f;
-            this.blackFadeSprite.y = manager.rainWorld.screenSize.y / 2f;
+            this.blackFadeSprite.x = screenWidth / 2f;
+            this.blackFadeSprite.y = screenHeight / 2f;
             this.blackFadeSprite.color = new Color( 0f, 0f, 0f );
             Futile.stage.AddChild( this.blackFadeSprite );
 
+            #region MULTIPLAYER SETTINGS
             //Multiplayer Settings Box
-            colorBox = new RoundedRect(this, this.pages[0], new Vector2( 940, 125), new Vector2( 400, 600 ), false);
+            colorBox = new RoundedRect(this, this.pages[0], new Vector2(resOffset + multiplayerSettingsPositionX, panelPositionY), new Vector2(multiplayerSettingsWidth, panelHeight), false);
             this.pages[0].subObjects.Add(colorBox);
 
             //Settings Label
             settingsLabel = new FLabel("font", "Multiplayer Settings");
-            settingsLabel.SetPosition(new Vector2(1140, manager.rainWorld.screenSize.y - 60));
+            settingsLabel.SetPosition(new Vector2(multiplayerSettingsPositionX + 70, screenHeight - 60));
             Futile.stage.AddChild(this.settingsLabel);
 
             //Body Color Label
             bodyLabel = new FLabel("font", "Body Color");
-            bodyLabel.SetPosition(new Vector2(1140, manager.rainWorld.screenSize.y - 90));
+            bodyLabel.SetPosition(new Vector2(multiplayerSettingsPositionX + 70, screenHeight - 90));
             Futile.stage.AddChild(this.bodyLabel);
 
             //Red Slider
-            bodyRed = new HorizontalSlider(this, this.pages[0], "Red", new Vector2(960, manager.rainWorld.screenSize.y - 130), new Vector2(255, 30), (Slider.SliderID)patch_Slider.SliderID.BodyRed, false);
+            bodyRed = new HorizontalSlider(this, this.pages[0], "Red", new Vector2(resOffset+multiplayerSettingsSliderPositionX, screenHeight - 130), new Vector2(multiplayerSettingsSliderWidth, 30), (Slider.SliderID)patch_Slider.SliderID.BodyRed, false);
             bodyRed.floatValue = 1f;
             bodyRed.buttonBehav.greyedOut = false;
             this.pages[0].subObjects.Add(this.bodyRed);
             //Green Slider
-            bodyGreen = new HorizontalSlider(this, this.pages[0], "Green", new Vector2(960, manager.rainWorld.screenSize.y - 170), new Vector2(255, 30), (Slider.SliderID)patch_Slider.SliderID.BodyGreen, false);
+            bodyGreen = new HorizontalSlider(this, this.pages[0], "Green", new Vector2(resOffset+multiplayerSettingsSliderPositionX, screenHeight - 170), new Vector2(multiplayerSettingsSliderWidth, 30), (Slider.SliderID)patch_Slider.SliderID.BodyGreen, false);
             bodyGreen.floatValue = 1f;
             bodyGreen.buttonBehav.greyedOut = false;
             this.pages[0].subObjects.Add(this.bodyGreen);
             //Blue Slider
-            bodyBlue = new HorizontalSlider(this, this.pages[0], "Blue", new Vector2(960, manager.rainWorld.screenSize.y - 210), new Vector2(255, 30), (Slider.SliderID)patch_Slider.SliderID.BodyBlue, false);
+            bodyBlue = new HorizontalSlider(this, this.pages[0], "Blue", new Vector2(resOffset+multiplayerSettingsSliderPositionX, screenHeight - 210), new Vector2(multiplayerSettingsSliderWidth, 30), (Slider.SliderID)patch_Slider.SliderID.BodyBlue, false);
             bodyBlue.floatValue = 1f;
             bodyBlue.buttonBehav.greyedOut = false;
             this.pages[0].subObjects.Add(this.bodyBlue);
 
             //Eye Color Label
             eyesLabel = new FLabel("font", "Eye Color");
-            eyesLabel.SetPosition(new Vector2(1140, manager.rainWorld.screenSize.y - 235));
+            eyesLabel.SetPosition(new Vector2(multiplayerSettingsPositionX + 70, screenHeight - 240));
             Futile.stage.AddChild(this.eyesLabel);
 
             //Red Slider
-            eyesRed = new HorizontalSlider(this, this.pages[0], "Red ", new Vector2(960, manager.rainWorld.screenSize.y - 280), new Vector2(255, 30), (Slider.SliderID)patch_Slider.SliderID.EyesRed, false);
+            eyesRed = new HorizontalSlider(this, this.pages[0], "Red ", new Vector2(resOffset+multiplayerSettingsSliderPositionX, screenHeight - 280), new Vector2(multiplayerSettingsSliderWidth, 30), (Slider.SliderID)patch_Slider.SliderID.EyesRed, false);
             eyesRed.floatValue = 0f;
             this.pages[0].subObjects.Add(this.eyesRed);
             //Green Slider
-            eyesGreen = new HorizontalSlider(this, this.pages[0], "Green ", new Vector2(960, manager.rainWorld.screenSize.y - 320), new Vector2(255, 30), (Slider.SliderID)patch_Slider.SliderID.EyesGreen, false);
+            eyesGreen = new HorizontalSlider(this, this.pages[0], "Green ", new Vector2(resOffset+multiplayerSettingsSliderPositionX, screenHeight - 320), new Vector2(multiplayerSettingsSliderWidth, 30), (Slider.SliderID)patch_Slider.SliderID.EyesGreen, false);
             eyesGreen.floatValue = 0f;
             this.pages[0].subObjects.Add(this.eyesGreen);
             //Blue Slider
-            eyesBlue = new HorizontalSlider(this, this.pages[0], "Blue ", new Vector2(960, manager.rainWorld.screenSize.y - 360), new Vector2(255, 30), (Slider.SliderID)patch_Slider.SliderID.EyesBlue, false);
+            eyesBlue = new HorizontalSlider(this, this.pages[0], "Blue ", new Vector2(resOffset+multiplayerSettingsSliderPositionX, screenHeight - 360), new Vector2(multiplayerSettingsSliderWidth, 30), (Slider.SliderID)patch_Slider.SliderID.EyesBlue, false);
             eyesBlue.floatValue = 0f;
             this.pages[0].subObjects.Add(this.eyesBlue);
             
@@ -122,7 +146,7 @@ namespace Monkland {
             eyes.scaleX = 1f;
             eyes.scaleY = 1f;
             eyes.color = new Color(0, 0, 0);
-            eyes.x = 964;
+            eyes.x = multiplayerSettingsPositionX + 130;
             eyes.y = manager.rainWorld.screenSize.y - 236;
             eyes.isVisible = true;
             this.pages[0].Container.AddChild(this.eyes);
@@ -132,33 +156,37 @@ namespace Monkland {
             slugcat.scaleX = 1f;
             slugcat.scaleY = 1f;
             slugcat.color = new Color(1f, 1f, 1f);
-            slugcat.x = 970;
+            slugcat.x = multiplayerSettingsPositionX + 136;
             slugcat.y = manager.rainWorld.screenSize.y - 235;
             slugcat.isVisible = true;
             this.pages[0].Container.AddChild(this.slugcat);
-            
+            #endregion
+
+            #region CONTROL BUTTONS
             //Back button
-            this.backButton = new SimpleButton(this, this.pages[0], base.Translate("BACK"), "EXIT", new Vector2( 100f, 50f ), new Vector2(110f, 30f));
+            this.backButton = new SimpleButton(this, this.pages[0], base.Translate( "BACK" ), "EXIT", new Vector2(resOffset+100f, 50f ), new Vector2( 110f, 30f ));
             this.pages[0].subObjects.Add(this.backButton);
 
             //Back button
-            this.backButton = new SimpleButton( this, this.pages[0], base.Translate( "BACK" ), "EXIT", new Vector2( 100f, 50f ), new Vector2( 110f, 30f ) );
+            this.backButton = new SimpleButton( this, this.pages[0], base.Translate( "BACK" ), "EXIT", new Vector2(resOffset+100f, 50f ), new Vector2( 110f, 30f ) );
             this.pages[0].subObjects.Add( this.backButton );
+            // => those two lines seem to be redondant
 
             //Start Game button
-            this.startGameButton = new SimpleButton( this, this.pages[0], "Start Game", "STARTGAME", new Vector2( 1060, 50f ), new Vector2( 110f, 30f ) );
+            this.startGameButton = new SimpleButton( this, this.pages[0], "Start Game", "STARTGAME", new Vector2(resOffset+screenWidth - 125, 50f ), new Vector2( 110f, 30f ) );
             this.pages[0].subObjects.Add( this.startGameButton );
 
             //Ready Up button
-            this.readyUpButton = new SimpleButton( this, this.pages[0], "Ready UP", "READYUP", new Vector2( 940, 50f ), new Vector2( 110f, 30f ) );
+            this.readyUpButton = new SimpleButton( this, this.pages[0], "Ready UP", "READYUP", new Vector2(resOffset+screenWidth - 250, 50f ), new Vector2( 110f, 30f ) );
             this.pages[0].subObjects.Add( this.readyUpButton );
+            #endregion
 
             //Multiplayer Chat
-            this.gameChat = new MultiplayerChat( this, this.pages[0], new Vector2( 320, 125 ), new Vector2( 600, 600 ) );
+            this.gameChat = new MultiplayerChat( this, this.pages[0], new Vector2(resOffset+roomChatPositionX, panelPositionY ), new Vector2( roomChatWidth, panelHeight ) );
             this.pages[0].subObjects.Add( this.gameChat );
 
             //Invite menu
-            playerList = new MultiplayerPlayerList( this, this.pages[0], new Vector2( 100, 125 ), new Vector2( 200, 600 ), new Vector2( 180, 180 ) );
+            playerList = new MultiplayerPlayerList( this, this.pages[0], new Vector2(resOffset+playerListPositionX, panelPositionY ), new Vector2( playerListWidth, panelHeight ), new Vector2( playerListWidth - 20, playerListWidth - 20 ) );
             this.pages[0].subObjects.Add( this.playerList );
 
             //Controller Combatability
